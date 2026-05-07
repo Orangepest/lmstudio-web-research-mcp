@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "lmstudio-web-research": {
+      "command": "C:/ABSOLUTE/PATH/TO/lmstudio_mcp_crawler_v2/.venv/Scripts/python.exe",
+      "args": [
+        "-m",
+        "mcp_server.server"
+      ],
+      "cwd": "C:/ABSOLUTE/PATH/TO/lmstudio_mcp_crawler_v2",
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "WEB_RESEARCH_LOG_PATH": ".runtime/web_research.log",
+        "ALLOWED_DOMAINS": "*",
+        "USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+        "REQUEST_TIMEOUT": "25",
+        "MAX_CONTENT_CHARS": "120000",
+        "BROWSER_HEADLESS": "true",
+        "BROWSER_TIMEOUT_MS": "30000",
+        "BROWSER_MAX_CONTENT_CHARS": "60000",
+        "BROWSER_LOCALE": "en-US",
+        "BROWSER_TIMEZONE_ID": "Asia/Calcutta",
+        "BROWSER_PROFILE_DIR": ""
+      }
+    }
+  }
+}

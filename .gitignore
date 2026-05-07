@@ -1,0 +1,38 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+data/
+.runtime/
+output/
+*.csv
+*.xlsx
+*.db
+*.log
+
+# Browser profile caches (recreated on first browser render)
+.runtime/browser_profile/Default/Cache/
+.runtime/browser_profile/Default/Code Cache/
+.runtime/browser_profile/Default/blob_storage/
+.runtime/browser_profile/Default/GPUCache/
+.runtime/browser_profile/Default/DawnWebGPUCache/
+.runtime/browser_profile/Default/DIPS
+.runtime/browser_profile/Default/Shared Dictionary/
+.runtime/browser_profile/Default/Network/
+.runtime/browser_profile/Default/PersistentOriginTrials/
+
+# Ephemeral browser profiles (created per-request)
+.runtime/browser_profile/
+
+# Logs (unbounded growth prevented by RotatingFileHandler)
+.runtime/*.log
+.runtime/chrome_debug.log
+
+# Test and coverage caches
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+.hf_upload/
