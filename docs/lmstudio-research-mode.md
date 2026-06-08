@@ -140,6 +140,8 @@ Use `safe_research_director` when:
 - Poll with `status` or `director_id: <id>`.
 - To create follow-up jobs from quality gaps, use `director_id: <id>`, `action: advance`, and `apply=true`.
 - To run bounded director automation, use `director_id: <id>`, `action: wave`, `max_cycles=N`, optional `start_worker=true`, and `apply=true`.
+- To let the director keep driving bounded waves with a persistent ledger, use `director_id: <id>`, `action: autopilot`, `max_iterations=N`, optional `start_worker=true`, and `apply=true`.
+- Use `run_worker=true` only from the CLI when you want the autopilot call itself to execute queued jobs; in LM Studio, prefer `start_worker=true` so long research runs outside the MCP request.
 - To inspect one director, use `director_id: <id>` and `action: dashboard`; add `apply=true` to write Markdown/JSON dashboard artifacts.
 - In dashboard output, read `graph_summary` for central claims, weak evidence claims, repeated source domains, unresolved contradiction chains, and next graph actions.
 - To export a machine-readable evidence graph, use `director_id: <id>` and `action: graph`; add `apply=true` to write `evidence_graph.json` and `index.md`.

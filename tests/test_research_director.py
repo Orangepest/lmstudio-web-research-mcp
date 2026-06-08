@@ -11,7 +11,7 @@ import unittest
 from pathlib import Path
 
 from scripts.research_director import ROOT
-from web_research.director import advance_research_director, build_director_evidence_graph, build_director_runbook, build_research_director_dashboard, compare_director_bundles, execute_director_graph_actions, export_director_runbook, research_director_command, run_research_director_wave
+from web_research.director import advance_research_director, build_director_evidence_graph, build_director_runbook, build_research_director_dashboard, compare_director_bundles, execute_director_graph_actions, export_director_runbook, research_director_command, run_research_director_autopilot, run_research_director_wave
 from web_research.jobs import create_research_job, finish_research_job, lease_next_research_job, list_research_jobs, load_research_job, update_research_job
 from web_research.runs import save_research_run
 
@@ -852,6 +852,108 @@ class ResearchDirectorTests(unittest.TestCase):
         self.assertEqual(result['stop_reason'], 'synthesize')
         self.assertTrue(wave_exists)
         self.assertTrue(synthesis_exists)
+
+    def test_director_autopilot_preview_does_not_write_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            created = research_director_command(
+                'objective: Build a local deep research system\ndepth=standard\nbudget_jobs=8\napply=true',
+                root=root / 'directors',
+                campaign_root=root / 'campaigns',
+                jobs_root=root / 'jobs',
+                runs_root=root / 'runs',
+                synthesis_root=root / 'syntheses',
+            )
+            director_id = created['director']['director_id']
+            result = run_research_director_autopilot(
+                root / 'directors',
+                director_id,
+                campaign_root=root / 'campaigns',
+                jobs_root=root / 'jobs',
+                runs_root=root / 'runs',
+                synthesis_root=root / 'syntheses',
+                worker_state_dir=root / 'worker',
+                apply=False,
+                start_worker_enabled=True,
+                max_iterations=2,
+                max_cycles_per_iteration=1,
+            )
+
+            self.assertFalse((root / 'worker').exists())
+            self.assertFalse((root / 'directors' / director_id / 'autopilots').exists())
+
+        self.assertTrue(result['dry_run'])
+        self.assertEqual(result['worker_mode'], 'detached')
+        self.assertEqual(result['stop_reason'], 'waiting_for_worker')
+        self.assertIn('Autopilot queued or observed work', result['message'])
+        self.assertIn('Research Director Autopilot', result['markdown'])
+
+    def test_director_autopilot_apply_writes_ledger_and_synthesizes_when_ready(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            created = research_director_command(
+                'objective: Build a local deep research system\ndepth=standard\nbudget_jobs=8\nquality_target=moderate\napply=true',
+                root=root / 'directors',
+                campaign_root=root / 'campaigns',
+                jobs_root=root / 'jobs',
+                runs_root=root / 'runs',
+                synthesis_root=root / 'syntheses',
+            )
+            director_id = created['director']['director_id']
+            _complete_all_remaining_jobs(root)
+            result = research_director_command(
+                f'director_id: {director_id}\naction: autopilot\nmax_iterations=3\nmax_cycles=1\napply=true',
+                root=root / 'directors',
+                campaign_root=root / 'campaigns',
+                jobs_root=root / 'jobs',
+                runs_root=root / 'runs',
+                synthesis_root=root / 'syntheses',
+                worker_state_dir=root / 'worker',
+            )
+            autopilot_path = Path(result['autopilot_path'])
+            report_path = Path(result['report_path'])
+            saved = json.loads(autopilot_path.read_text(encoding='utf-8'))
+            director = json.loads((root / 'directors' / director_id / 'director.json').read_text(encoding='utf-8'))
+            autopilot_exists = autopilot_path.exists()
+            report_exists = report_path.exists()
+
+        self.assertFalse(result['dry_run'])
+        self.assertEqual(result['stop_reason'], 'synthesize')
+        self.assertTrue(autopilot_exists)
+        self.assertTrue(report_exists)
+        self.assertEqual(saved['stop_reason'], 'synthesize')
+        self.assertTrue(any(event.get('event') == 'autopilot' for event in director['events']))
+        self.assertIn('dashboard', result['markdown'])
+        self.assertIn('runbook', result['markdown'])
+
+    def test_director_autopilot_stops_after_queuing_followups_when_worker_is_external(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            created = research_director_command(
+                'objective: Build a local deep research system\ndepth=standard\nbudget_jobs=8\nquality_target=strong\napply=true',
+                root=root / 'directors',
+                campaign_root=root / 'campaigns',
+                jobs_root=root / 'jobs',
+                runs_root=root / 'runs',
+                synthesis_root=root / 'syntheses',
+            )
+            director_id = created['director']['director_id']
+            _complete_all_remaining_jobs(root, quality_score=42, primary_sources=0)
+            result = research_director_command(
+                f'director_id: {director_id}\naction: autopilot\nmax_iterations=3\nmax_cycles=1\nmax_followups=2\napply=true',
+                root=root / 'directors',
+                campaign_root=root / 'campaigns',
+                jobs_root=root / 'jobs',
+                runs_root=root / 'runs',
+                synthesis_root=root / 'syntheses',
+                worker_state_dir=root / 'worker',
+            )
+            jobs = list_research_jobs(root / 'jobs', limit=20)
+            followup_jobs = [job for job in jobs['jobs'] if 'director_followup' in job.get('tags', [])]
+
+        self.assertEqual(result['stop_reason'], 'waiting_for_worker')
+        self.assertEqual(len(followup_jobs), 2)
+        self.assertEqual(result['iterations'][0]['wave']['cycles'][0]['action'], 'continue')
 
     def test_director_dashboard_collects_gate_waves_and_writes_report(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

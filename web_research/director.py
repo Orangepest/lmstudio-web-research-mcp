@@ -1718,6 +1718,255 @@ def run_research_director_wave(
     return payload
 
 
+def director_autopilot_markdown(autopilot: dict[str, Any]) -> str:
+    director = autopilot.get('director') if isinstance(autopilot.get('director'), dict) else {}
+    lines = [
+        f"# Research Director Autopilot: {_fmt(autopilot.get('autopilot_id'))}",
+        '',
+        f"- Director: {_fmt(autopilot.get('director_id'))}",
+        f"- Objective: {_fmt(director.get('objective'))}",
+        f"- Dry run: {_fmt(autopilot.get('dry_run'))}",
+        f"- Iterations: {_fmt(autopilot.get('iteration_count'))}",
+        f"- Stop reason: {_fmt(autopilot.get('stop_reason'))}",
+        f"- Worker mode: {_fmt(autopilot.get('worker_mode'))}",
+        f"- Autopilot JSON: {_fmt(autopilot.get('autopilot_path'))}",
+        '',
+        '## Iterations',
+        '',
+        '| Iteration | Gate Action | Wave Stop | Worker Jobs | Followups | Artifacts |',
+        '| ---: | --- | --- | ---: | ---: | --- |',
+    ]
+    for iteration in autopilot.get('iterations', []) or []:
+        if not isinstance(iteration, dict):
+            continue
+        gate = iteration.get('quality_gate') if isinstance(iteration.get('quality_gate'), dict) else {}
+        worker = iteration.get('worker_run') if isinstance(iteration.get('worker_run'), dict) else {}
+        wave = iteration.get('wave') if isinstance(iteration.get('wave'), dict) else {}
+        created_followups = 0
+        for cycle in wave.get('cycles', []) or []:
+            if not isinstance(cycle, dict):
+                continue
+            advance = cycle.get('advance') if isinstance(cycle.get('advance'), dict) else {}
+            created_followups += len(advance.get('created_followups') or [])
+        artifacts = []
+        if iteration.get('dashboard_path'):
+            artifacts.append('dashboard')
+        if iteration.get('runbook_path'):
+            artifacts.append('runbook')
+        if iteration.get('synthesis_bundle_dir'):
+            artifacts.append('synthesis')
+        lines.append(
+            f"| {_fmt(iteration.get('iteration'))} | {_fmt(gate.get('recommended_action'))} | "
+            f"{_fmt(wave.get('stop_reason'))} | {_fmt(worker.get('worked_count', 0))} | "
+            f"{_fmt(created_followups)} | {', '.join(artifacts) or 'none'} |"
+        )
+    lines.extend(['', '## Stop Detail', ''])
+    lines.append(f"- {_fmt(autopilot.get('message'))}")
+    lines.append('')
+    return '\n'.join(lines)
+
+
+def run_research_director_autopilot(
+    root: Path,
+    director_id: str,
+    *,
+    campaign_root: Path,
+    jobs_root: Path,
+    runs_root: Path,
+    synthesis_root: Path,
+    worker_state_dir: Path,
+    apply: bool = False,
+    max_iterations: int = 5,
+    max_cycles_per_iteration: int = 2,
+    max_followups: int = 3,
+    start_worker_enabled: bool = False,
+    run_worker_enabled: bool = False,
+    worker_jobs_per_iteration: int = 1,
+    worker_id: str = 'research-director-autopilot',
+    local_synthesis: bool = False,
+    write_dashboard: bool = True,
+    write_runbook_on_stop: bool = True,
+    tmux: bool = False,
+    session: str = 'lmstudio-research-worker',
+) -> dict[str, Any]:
+    loaded = load_research_director(root, director_id)
+    if not loaded.get('ok'):
+        return loaded
+    director = dict(loaded['director'])
+    max_iterations = max(1, min(50, int(max_iterations)))
+    max_cycles_per_iteration = max(1, min(20, int(max_cycles_per_iteration)))
+    max_followups = max(0, min(20, int(max_followups)))
+    worker_jobs_per_iteration = max(0, min(25, int(worker_jobs_per_iteration)))
+    autopilot_id = f'{utc_now().replace(":", "").replace("-", "")}-{uuid.uuid4().hex[:8]}'.lower()
+    autopilot_dir = _safe_director_dir(root, director_id) / 'autopilots' / autopilot_id
+    autopilot_path = autopilot_dir / 'autopilot.json'
+    report_path = autopilot_dir / 'autopilot.md'
+    iterations: list[dict[str, Any]] = []
+    stop_reason = 'max_iterations'
+    message = 'Autopilot reached the configured iteration limit.'
+    worker_start_once = bool(start_worker_enabled)
+
+    for iteration_number in range(1, max_iterations + 1):
+        worker_run = None
+        if run_worker_enabled and worker_jobs_per_iteration:
+            if apply:
+                from scripts.research_job_worker import run_worker
+
+                worker_run = asyncio.run(
+                    run_worker(
+                        jobs_root,
+                        worker_id=f'{worker_id}-{iteration_number}',
+                        lease_seconds=3600,
+                        max_jobs=worker_jobs_per_iteration,
+                    )
+                )
+            else:
+                worker_run = {
+                    'ok': True,
+                    'dry_run': True,
+                    'worker_id': f'{worker_id}-{iteration_number}',
+                    'worked_count': 0,
+                    'planned_max_jobs': worker_jobs_per_iteration,
+                }
+
+        before = assess_research_director(director, campaign_root=campaign_root, jobs_root=jobs_root, runs_root=runs_root)
+        gate = before.get('quality_gate') if isinstance(before.get('quality_gate'), dict) else {}
+        recommended = str(gate.get('recommended_action') or 'unknown')
+        wave = run_research_director_wave(
+            root,
+            director_id,
+            campaign_root=campaign_root,
+            jobs_root=jobs_root,
+            runs_root=runs_root,
+            synthesis_root=synthesis_root,
+            worker_state_dir=worker_state_dir,
+            apply=apply,
+            start_worker_enabled=worker_start_once,
+            max_cycles=max_cycles_per_iteration,
+            max_followups=max_followups,
+            local_synthesis=local_synthesis,
+            worker_id=worker_id,
+            tmux=tmux,
+            session=session,
+        )
+        worker_start_once = False
+        loaded_after = load_research_director(root, director_id)
+        if loaded_after.get('ok'):
+            director = dict(loaded_after['director'])
+
+        dashboard = None
+        if write_dashboard:
+            dashboard = build_research_director_dashboard(
+                root,
+                director_id,
+                campaign_root=campaign_root,
+                jobs_root=jobs_root,
+                runs_root=runs_root,
+                apply=apply,
+            )
+        runbook = None
+        synthesis_bundle_dir = None
+        created_followup_count = 0
+        for cycle in wave.get('cycles', []) or []:
+            if not isinstance(cycle, dict):
+                continue
+            advance = cycle.get('advance') if isinstance(cycle.get('advance'), dict) else {}
+            created_followup_count += len(advance.get('created_followups') or [])
+            synthesis = advance.get('synthesis') if isinstance(advance.get('synthesis'), dict) else {}
+            if synthesis.get('bundle_dir'):
+                synthesis_bundle_dir = synthesis.get('bundle_dir')
+
+        iteration_record = {
+            'iteration': iteration_number,
+            'started_at': utc_now(),
+            'quality_gate': gate,
+            'recommended_action': recommended,
+            'worker_run': worker_run,
+            'wave': wave,
+            'dashboard_path': dashboard.get('dashboard_path') if isinstance(dashboard, dict) else None,
+            'runbook_path': None,
+            'synthesis_bundle_dir': synthesis_bundle_dir,
+        }
+        iterations.append(iteration_record)
+
+        wave_stop = str(wave.get('stop_reason') or '')
+        if wave_stop in {'synthesize', 'stop_budget_exhausted'}:
+            stop_reason = wave_stop
+            message = f'Autopilot stopped because the director wave reached {wave_stop}.'
+            break
+        if wave_stop == 'waiting_for_worker':
+            if run_worker_enabled and apply:
+                continue
+            stop_reason = 'waiting_for_worker'
+            message = 'Autopilot queued or observed work and is waiting for the research worker to finish jobs.'
+            break
+        if created_followup_count and not run_worker_enabled:
+            stop_reason = 'waiting_for_worker'
+            message = 'Autopilot queued follow-up jobs and is waiting for an external research worker to finish them.'
+            break
+        if recommended == 'stop_budget_exhausted':
+            stop_reason = 'stop_budget_exhausted'
+            message = 'Autopilot stopped because the director follow-up budget is exhausted.'
+            break
+        if recommended == 'synthesize':
+            stop_reason = 'synthesize'
+            message = 'Autopilot stopped after synthesis.'
+            break
+
+    if write_runbook_on_stop:
+        final_runbook = build_director_runbook(
+            root,
+            director_id,
+            campaign_root=campaign_root,
+            jobs_root=jobs_root,
+            runs_root=runs_root,
+            apply=apply,
+        )
+        if iterations:
+            iterations[-1]['runbook_path'] = final_runbook.get('runbook_path')
+
+    payload = {
+        'ok': True,
+        'dry_run': not apply,
+        'autopilot_id': autopilot_id,
+        'director_id': director_id,
+        'director': _director_summary(director),
+        'worker_mode': 'in_process' if run_worker_enabled else ('detached' if start_worker_enabled else 'observe_only'),
+        'max_iterations': max_iterations,
+        'max_cycles_per_iteration': max_cycles_per_iteration,
+        'max_followups': max_followups,
+        'iteration_count': len(iterations),
+        'stop_reason': stop_reason,
+        'iterations': iterations,
+        'autopilot_path': str(autopilot_path),
+        'report_path': str(report_path),
+        'created_at': utc_now(),
+        'message': message,
+    }
+    payload['markdown'] = director_autopilot_markdown(payload)
+    if apply:
+        autopilot_dir.mkdir(parents=True, exist_ok=True)
+        _write_json(autopilot_path, {key: value for key, value in payload.items() if key != 'markdown'})
+        report_path.write_text(str(payload['markdown']), encoding='utf-8')
+        loaded_final = load_research_director(root, director_id)
+        if loaded_final.get('ok'):
+            updated = dict(loaded_final['director'])
+            updated['updated_at'] = utc_now()
+            updated.setdefault('events', []).append(
+                {
+                    'timestamp': updated['updated_at'],
+                    'event': 'autopilot',
+                    'autopilot_id': autopilot_id,
+                    'stop_reason': stop_reason,
+                    'iteration_count': len(iterations),
+                    'autopilot_path': str(autopilot_path),
+                }
+            )
+            _write_json(Path(str(updated['director_path'])), updated)
+            payload['director'] = _director_summary(updated)
+    return payload
+
+
 def list_director_waves(root: Path, director_id: str, *, limit: int = 20) -> dict[str, Any]:
     try:
         director_dir = _safe_director_dir(root, director_id)
@@ -3844,7 +4093,7 @@ def research_director_command(
             return loaded
         assessment = assess_research_director(loaded['director'], campaign_root=campaign_root, jobs_root=jobs_root, runs_root=runs_root)
         return {'ok': assessment.get('ok'), 'tool': 'safe_research_director', 'director': assessment.get('director'), 'assessment': assessment}
-    if values and action in {'advance', 'synthesize', 'wave', 'dashboard', 'history', 'graph', 'evidence_graph', 'graph_actions', 'execute_graph_actions', 'comparison_actions', 'compare_actions', 'execute_comparison_actions', 'comparison_replay', 'replay_comparison_actions', 'runbook', 'handoff', 'runbook_export', 'export_runbook', 'compare_bundles', 'compare_bundle', 'recovery', 'recover'}:
+    if values and action in {'advance', 'synthesize', 'wave', 'autopilot', 'auto', 'dashboard', 'history', 'graph', 'evidence_graph', 'graph_actions', 'execute_graph_actions', 'comparison_actions', 'compare_actions', 'execute_comparison_actions', 'comparison_replay', 'replay_comparison_actions', 'runbook', 'handoff', 'runbook_export', 'export_runbook', 'compare_bundles', 'compare_bundle', 'recovery', 'recover'}:
         if action in {'recovery', 'recover'}:
             policy_name = str(options.get('policy') or options.get('recovery_policy') or 'manual')
             recovery_policy = _recovery_policy(policy_name)
@@ -4008,6 +4257,32 @@ def research_director_command(
                     max_followups=_int_option(options, 'max_followups', 3, minimum=0, maximum=20),
                     local_synthesis=_bool_option(options, 'local_synthesis'),
                     worker_id=str(options.get('worker_id') or 'research-director-wave'),
+                    tmux=_bool_option(options, 'tmux'),
+                    session=str(options.get('session') or 'lmstudio-research-worker'),
+                ),
+            }
+        if action in {'autopilot', 'auto'}:
+            return {
+                'tool': 'safe_research_director',
+                **run_research_director_autopilot(
+                    root,
+                    values[0],
+                    campaign_root=campaign_root,
+                    jobs_root=jobs_root,
+                    runs_root=runs_root,
+                    synthesis_root=synthesis_root,
+                    worker_state_dir=Path(str(options.get('worker_state_dir') or worker_state_dir or root.parent / 'research_job_worker')),
+                    apply=apply,
+                    start_worker_enabled=_bool_option(options, 'start_worker'),
+                    run_worker_enabled=_bool_option(options, 'run_worker'),
+                    max_iterations=_int_option(options, 'max_iterations', 5, minimum=1, maximum=50),
+                    max_cycles_per_iteration=_int_option(options, 'max_cycles', 2, minimum=1, maximum=20),
+                    max_followups=_int_option(options, 'max_followups', 3, minimum=0, maximum=20),
+                    worker_jobs_per_iteration=_int_option(options, 'worker_jobs_per_iteration', 1, minimum=0, maximum=25),
+                    local_synthesis=_bool_option(options, 'local_synthesis'),
+                    write_dashboard=_bool_option(options, 'write_dashboard', default=True),
+                    write_runbook_on_stop=_bool_option(options, 'write_runbook', default=True),
+                    worker_id=str(options.get('worker_id') or 'research-director-autopilot'),
                     tmux=_bool_option(options, 'tmux'),
                     session=str(options.get('session') or 'lmstudio-research-worker'),
                 ),
