@@ -85,6 +85,18 @@ By default, the live MCP server exposes only `safe_*` one-parameter tools to LM 
 
 ## Quick Start
 
+Windows PowerShell one-command install:
+
+```powershell
+powershell -ExecutionPolicy Bypass -NoProfile -Command "irm https://raw.githubusercontent.com/Orangepest/lmstudio-web-research-mcp/main/scripts/install_windows.ps1 | iex"
+```
+
+That installs the repo under `%USERPROFILE%\mcp-servers\lmstudio-web-research-mcp`, creates `.venv`, installs dependencies and Playwright Chromium, writes `%USERPROFILE%\.lmstudio\mcp.json`, and smoke-tests the MCP server. Restart LM Studio after it finishes.
+
+Requires Python 3.11+. Git is optional; the installer falls back to downloading the GitHub ZIP.
+
+macOS/Linux manual install:
+
 ```bash
 python3.11 -m venv .venv
 source .venv/bin/activate

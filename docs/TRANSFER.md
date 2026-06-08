@@ -29,6 +29,28 @@ Those exports are still local artifacts. Review them before sending anywhere.
 
 ## Fresh Clone Setup
 
+### Windows One-Command Install
+
+Open PowerShell and run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -NoProfile -Command "irm https://raw.githubusercontent.com/Orangepest/lmstudio-web-research-mcp/main/scripts/install_windows.ps1 | iex"
+```
+
+This downloads the repo, creates `.venv`, installs requirements, installs Playwright Chromium, writes `%USERPROFILE%\.lmstudio\mcp.json`, validates the config, and smoke-tests the MCP server. Restart LM Studio after it finishes.
+
+Requirements: Python 3.11+ must be installed. Git is optional; if Git is missing, the installer downloads the GitHub ZIP instead.
+
+If the one-liner fails, run this manual version so the error is visible:
+
+```powershell
+git clone https://github.com/Orangepest/lmstudio-web-research-mcp.git "$env:USERPROFILE\mcp-servers\lmstudio-web-research-mcp"
+cd "$env:USERPROFILE\mcp-servers\lmstudio-web-research-mcp"
+powershell -ExecutionPolicy Bypass -File .\scripts\install_windows.ps1 -SkipClone
+```
+
+### Manual Setup
+
 ```bash
 git clone <github-url> lmstudio-web-research-mcp
 cd lmstudio-web-research-mcp
@@ -48,6 +70,8 @@ py -3.11 -m venv .venv
 pip install -r requirements.txt
 python -m playwright install chromium
 python -m pytest -q
+python scripts\merge_lmstudio_mcp.py "$env:USERPROFILE\.lmstudio\mcp.json" --research-dir "$PWD" --platform windows --apply
+python scripts\validate_lmstudio_mcp.py "$env:USERPROFILE\.lmstudio\mcp.json" --research-dir "$PWD" --platform windows
 ```
 
 ## LM Studio Setup

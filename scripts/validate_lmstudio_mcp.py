@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,7 @@ def validate_config(
     research_dir: Path,
     chrome_url: str = DEFAULT_CHROME_URL,
     check_paths: bool = True,
+    platform: str | None = None,
 ) -> list[str]:
     errors: list[str] = []
     servers = data.get('mcpServers')
@@ -33,7 +35,12 @@ def validate_config(
         errors.append('missing web-research entry')
         return errors
 
-    expected_command = research_dir / '.venv' / 'bin' / 'python'
+    platform_name = (platform or os.name).lower()
+    expected_command = (
+        research_dir / '.venv' / 'Scripts' / 'python.exe'
+        if platform_name in {'nt', 'windows', 'win32'}
+        else research_dir / '.venv' / 'bin' / 'python'
+    )
     command = Path(str(web.get('command', ''))).expanduser()
     cwd = Path(str(web.get('cwd', ''))).expanduser()
     if command != expected_command:
@@ -49,6 +56,7 @@ def validate_config(
     if not isinstance(env, dict):
         errors.append('web-research env should be an object')
         return errors
+    is_windows = platform_name in {'nt', 'windows', 'win32'}
     expected_env = {
         'MCP_TRANSPORT': 'stdio',
         'WEB_RESEARCH_LOG_PATH': '.runtime/web_research.log',
@@ -72,7 +80,7 @@ def validate_config(
         'BROWSER_INTERACTION': 'true',
         'BROWSER_SCROLL_STEPS': '4',
         'BROWSER_LOCALE': 'en-US',
-        'BROWSER_TIMEZONE_ID': 'Asia/Seoul',
+        'BROWSER_TIMEZONE_ID': 'UTC' if is_windows else 'Asia/Seoul',
         'BROWSER_PROFILE_DIR': '',
         'MCP_COMPACT_RESULTS': 'true',
         'MCP_TOOL_PROFILE': 'agent_strict',
@@ -102,12 +110,15 @@ def main() -> int:
         '--research-dir',
         default=str(Path.home() / 'mcp-servers' / 'lmstudio-web-research-mcp'),
     )
+    parser.add_argument('--platform', choices=['posix', 'windows'], help='Override expected venv Python path style.')
+    parser.add_argument('--check-paths', action='store_true', default=True, help='Require configured command paths to exist.')
+    parser.add_argument('--no-check-paths', action='store_false', dest='check_paths', help='Validate shape only, without checking local files.')
     args = parser.parse_args()
 
     config_path = Path(args.config).expanduser()
     research_dir = Path(args.research_dir).expanduser()
     data = json.loads(config_path.read_text())
-    errors = validate_config(data, research_dir=research_dir)
+    errors = validate_config(data, research_dir=research_dir, platform=args.platform, check_paths=args.check_paths)
     if errors:
         print('\n'.join(errors))
         return 1

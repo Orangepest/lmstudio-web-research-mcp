@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 
 from scripts.merge_lmstudio_mcp import merge_config
+from scripts.validate_lmstudio_mcp import validate_config
 
 
 class MergeLMStudioMCPTests(unittest.TestCase):
@@ -38,6 +39,20 @@ class MergeLMStudioMCPTests(unittest.TestCase):
         self.assertEqual(merged['mcpServers']['web-research']['env']['MCP_RESULT_EXCERPT_CHARS'], '3500')
         self.assertEqual(merged['mcpServers']['web-research']['env']['MCP_RESULT_MAX_ITEMS'], '4')
         self.assertEqual(merged['mcpServers']['chrome-mcp-server']['url'], 'http://127.0.0.1:12306/mcp')
+
+    def test_merge_config_can_generate_windows_paths(self) -> None:
+        research_dir = Path('C:/Users/example/mcp-servers/lmstudio-web-research-mcp')
+        merged = merge_config({}, research_dir=research_dir, platform='windows')
+        web = merged['mcpServers']['web-research']
+
+        self.assertEqual(
+            web['command'],
+            'C:/Users/example/mcp-servers/lmstudio-web-research-mcp/.venv/Scripts/python.exe',
+        )
+        self.assertEqual(web['cwd'], 'C:/Users/example/mcp-servers/lmstudio-web-research-mcp')
+        self.assertEqual(web['env']['BROWSER_TIMEZONE_ID'], 'UTC')
+        self.assertEqual(web['env']['SEARCH_PROVIDERS'], 'searxng_local_html,searxng_local,brave_html,duckduckgo_lite')
+        self.assertEqual(validate_config(merged, research_dir=research_dir, platform='windows', check_paths=False), [])
 
 
 if __name__ == '__main__':
