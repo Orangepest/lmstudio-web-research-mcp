@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -87,6 +88,30 @@ def merge_config(existing: dict[str, Any], *, research_dir: Path, platform: str 
     return data
 
 
+def load_existing_config(path: Path, *, backup_invalid: bool = False) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        text = path.read_text(encoding='utf-8')
+    except OSError:
+        return {}
+    if not text.strip():
+        return {}
+    try:
+        value = json.loads(text)
+    except json.JSONDecodeError:
+        if backup_invalid:
+            backup_path = path.with_suffix(f'{path.suffix}.invalid')
+            counter = 1
+            while backup_path.exists():
+                backup_path = path.with_suffix(f'{path.suffix}.invalid-{counter}')
+                counter += 1
+            shutil.copy2(path, backup_path)
+            print(f'Warning: existing config was invalid JSON; backed it up to {backup_path}', flush=True)
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description='Merge local research MCP servers into an LM Studio MCP config.')
     parser.add_argument('config')
@@ -97,7 +122,7 @@ def main() -> int:
 
     config_path = Path(args.config).expanduser()
     research_dir = Path(args.research_dir).expanduser()
-    existing = json.loads(config_path.read_text()) if config_path.exists() else {}
+    existing = load_existing_config(config_path, backup_invalid=args.apply)
     merged = merge_config(existing, research_dir=research_dir, platform=args.platform)
     text = json.dumps(merged, indent=2)
     if args.apply:

@@ -117,7 +117,14 @@ def main() -> int:
 
     config_path = Path(args.config).expanduser()
     research_dir = Path(args.research_dir).expanduser()
-    data = json.loads(config_path.read_text())
+    try:
+        data = json.loads(config_path.read_text(encoding='utf-8'))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f'Could not read LM Studio MCP config JSON: {exc}')
+        return 1
+    if not isinstance(data, dict):
+        print('LM Studio MCP config should be a JSON object')
+        return 1
     errors = validate_config(data, research_dir=research_dir, platform=args.platform, check_paths=args.check_paths)
     if errors:
         print('\n'.join(errors))

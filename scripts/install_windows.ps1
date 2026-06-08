@@ -46,6 +46,17 @@ function Invoke-NativeProbe {
   }
 }
 
+function Invoke-Checked {
+  param(
+    [string]$Command,
+    [string[]]$Arguments
+  )
+  & $Command @Arguments
+  if ($LASTEXITCODE -ne 0) {
+    throw "Command failed with exit code ${LASTEXITCODE}: $Command $($Arguments -join ' ')"
+  }
+}
+
 Write-Step "Checking prerequisites"
 
 if (Get-Command py -ErrorAction SilentlyContinue) {
@@ -106,20 +117,20 @@ Write-Step "Creating Python environment"
 Push-Location $InstallDir
 try {
   if (-not (Test-Path ".venv\Scripts\python.exe")) {
-    & $PythonCommand @PythonArgs -m venv .venv
+    Invoke-Checked $PythonCommand ($PythonArgs + @("-m", "venv", ".venv"))
   }
-  .\.venv\Scripts\python.exe -m pip install --upgrade pip
-  .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+  Invoke-Checked ".\.venv\Scripts\python.exe" @("-m", "pip", "install", "--upgrade", "pip")
+  Invoke-Checked ".\.venv\Scripts\python.exe" @("-m", "pip", "install", "-r", "requirements.txt")
   if (-not $SkipPlaywright) {
-    .\.venv\Scripts\python.exe -m playwright install chromium
+    Invoke-Checked ".\.venv\Scripts\python.exe" @("-m", "playwright", "install", "chromium")
   }
 
   Write-Step "Installing LM Studio MCP config"
-  .\.venv\Scripts\python.exe scripts\merge_lmstudio_mcp.py $ConfigPath --research-dir $InstallDir --platform windows --apply | Out-Null
-  .\.venv\Scripts\python.exe scripts\validate_lmstudio_mcp.py $ConfigPath --research-dir $InstallDir --platform windows --check-paths | Out-Null
+  Invoke-Checked ".\.venv\Scripts\python.exe" @("scripts\merge_lmstudio_mcp.py", $ConfigPath, "--research-dir", $InstallDir, "--platform", "windows", "--apply")
+  Invoke-Checked ".\.venv\Scripts\python.exe" @("scripts\validate_lmstudio_mcp.py", $ConfigPath, "--research-dir", $InstallDir, "--platform", "windows", "--check-paths")
 
   Write-Step "Smoke-testing MCP server"
-  .\.venv\Scripts\python.exe scripts\probe_mcp_server.py --command ".\.venv\Scripts\python.exe" --cwd $InstallDir | Out-Null
+  Invoke-Checked ".\.venv\Scripts\python.exe" @("scripts\probe_mcp_server.py", "--command", ".\.venv\Scripts\python.exe", "--cwd", $InstallDir)
 
   Write-Host ""
   Write-Host "Installed LM Studio Web Research MCP." -ForegroundColor Green

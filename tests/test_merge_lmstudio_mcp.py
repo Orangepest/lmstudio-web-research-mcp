@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import unittest
+import tempfile
 from pathlib import Path
 
-from scripts.merge_lmstudio_mcp import merge_config
+from scripts.merge_lmstudio_mcp import load_existing_config, merge_config
 from scripts.validate_lmstudio_mcp import validate_config
 
 
@@ -53,6 +54,19 @@ class MergeLMStudioMCPTests(unittest.TestCase):
         self.assertEqual(web['env']['BROWSER_TIMEZONE_ID'], 'UTC')
         self.assertEqual(web['env']['SEARCH_PROVIDERS'], 'searxng_local_html,searxng_local,brave_html,duckduckgo_lite')
         self.assertEqual(validate_config(merged, research_dir=research_dir, platform='windows', check_paths=False), [])
+
+    def test_load_existing_config_backs_up_invalid_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config = Path(tmp) / 'mcp.json'
+            config.write_text('', encoding='utf-8')
+            empty = load_existing_config(config, backup_invalid=True)
+            config.write_text('not json', encoding='utf-8')
+            invalid = load_existing_config(config, backup_invalid=True)
+            backups = list(Path(tmp).glob('mcp.json.invalid*'))
+
+        self.assertEqual(empty, {})
+        self.assertEqual(invalid, {})
+        self.assertEqual(len(backups), 1)
 
 
 if __name__ == '__main__':
