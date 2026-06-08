@@ -93,12 +93,12 @@ powershell -ExecutionPolicy Bypass -NoProfile -Command "irm https://raw.githubus
 
 That installs the repo under `%USERPROFILE%\mcp-servers\lmstudio-web-research-mcp`, creates `.venv`, installs dependencies and Playwright Chromium, writes `%USERPROFILE%\.lmstudio\mcp.json`, and smoke-tests the MCP server. Restart LM Studio after it finishes.
 
-Requires Python 3.11+. Git is optional; the installer falls back to downloading the GitHub ZIP.
+Requires Python 3.12+. Git is optional; the installer falls back to downloading the GitHub ZIP.
 
 macOS/Linux manual install:
 
 ```bash
-python3.11 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python -m playwright install chromium

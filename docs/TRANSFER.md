@@ -39,7 +39,7 @@ powershell -ExecutionPolicy Bypass -NoProfile -Command "irm https://raw.githubus
 
 This downloads the repo, creates `.venv`, installs requirements, installs Playwright Chromium, writes `%USERPROFILE%\.lmstudio\mcp.json`, validates the config, and smoke-tests the MCP server. Restart LM Studio after it finishes.
 
-Requirements: Python 3.11+ must be installed. Git is optional; if Git is missing, the installer downloads the GitHub ZIP instead.
+Requirements: Python 3.12+ must be installed. Git is optional; if Git is missing, the installer downloads the GitHub ZIP instead.
 
 If the one-liner fails, run this manual version so the error is visible:
 
@@ -55,7 +55,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install_windows.ps1 -SkipClon
 git clone <github-url> lmstudio-web-research-mcp
 cd lmstudio-web-research-mcp
 
-python3.11 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python -m playwright install chromium
@@ -65,7 +65,7 @@ python -m pytest -q
 On Windows PowerShell:
 
 ```powershell
-py -3.11 -m venv .venv
+py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python -m playwright install chromium

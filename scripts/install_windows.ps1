@@ -23,28 +23,53 @@ function Require-Command {
   }
 }
 
+function Invoke-NativeProbe {
+  param(
+    [string]$Command,
+    [string[]]$Arguments
+  )
+  $oldPreference = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  try {
+    $output = & $Command @Arguments 2>$null
+    return [pscustomobject]@{
+      ExitCode = $LASTEXITCODE
+      Output = $output
+    }
+  } catch {
+    return [pscustomobject]@{
+      ExitCode = 1
+      Output = ""
+    }
+  } finally {
+    $ErrorActionPreference = $oldPreference
+  }
+}
+
 Write-Step "Checking prerequisites"
 
 if (Get-Command py -ErrorAction SilentlyContinue) {
-  $pythonVersion = (& py -3.11 --version 2>$null)
-  if ($LASTEXITCODE -eq 0) {
+  $probe = Invoke-NativeProbe "py" @("-3.12", "--version")
+  if ($probe.ExitCode -eq 0) {
     $PythonCommand = "py"
-    $PythonArgs = @("-3.11")
+    $PythonArgs = @("-3.12")
+    $pythonVersion = $probe.Output
   }
 }
 if (-not $PythonCommand -and (Get-Command python -ErrorAction SilentlyContinue)) {
-  $versionText = (& python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>$null)
-  if ($LASTEXITCODE -eq 0) {
+  $probe = Invoke-NativeProbe "python" @("-c", "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+  if ($probe.ExitCode -eq 0) {
+    $versionText = [string]$probe.Output
     $parts = $versionText.Trim().Split(".")
-    if ([int]$parts[0] -gt 3 -or ([int]$parts[0] -eq 3 -and [int]$parts[1] -ge 11)) {
+    if ([int]$parts[0] -gt 3 -or ([int]$parts[0] -eq 3 -and [int]$parts[1] -ge 12)) {
       $PythonCommand = "python"
       $PythonArgs = @()
-      $pythonVersion = (& python --version)
+      $pythonVersion = (Invoke-NativeProbe "python" @("--version")).Output
     }
   }
 }
 if (-not $PythonCommand) {
-  throw "Python 3.11+ was not found. Install it from https://www.python.org/downloads/windows/, then run this script again."
+  throw "Python 3.12+ was not found. Install it from https://www.python.org/downloads/windows/, then run this script again."
 }
 Write-Host "Using $pythonVersion"
 
