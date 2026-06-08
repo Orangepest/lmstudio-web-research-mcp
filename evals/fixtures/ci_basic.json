@@ -1,0 +1,442 @@
+{
+  "id": "ci_basic",
+  "name": "CI deterministic search/read fixture",
+  "searches": {
+    "What risks matter when giving a local model browser automation access?": {
+      "provider": "fixture",
+      "results": [
+        {
+          "title": "Browser Automation Security Docs",
+          "url": "https://docs.example.com/browser-automation-security",
+          "source": "docs.example.com",
+          "snippet": "Official documentation says browser automation can expose logged-in data and requires least-privilege controls.",
+          "rank": 1
+        },
+        {
+          "title": "Agency Guidance On Agentic Browser Access",
+          "url": "https://agency.gov/ai/browser-agent-risks",
+          "source": "agency.gov",
+          "snippet": "Government guidance highlights privacy, consent, and credential handling risks for AI browser agents.",
+          "rank": 2
+        },
+        {
+          "title": "Community Incident Notes",
+          "url": "https://forum.example.com/browser-agent-incident",
+          "source": "forum.example.com",
+          "snippet": "A community report describes accidental form submission and session leakage.",
+          "rank": 3
+        }
+      ]
+    },
+    "Does the browser automation tool work by default or require explicit setup?": {
+      "provider": "fixture",
+      "results": [
+        {
+          "title": "Official Browser Tool Setup",
+          "url": "https://docs.example.com/browser-tool-setup",
+          "source": "docs.example.com",
+          "snippet": "Official setup guide says browser automation requires explicit installation and user approval.",
+          "rank": 1
+        },
+        {
+          "title": "Issue Thread: Default Browser Tool",
+          "url": "https://github.com/example/browser-tool/issues/12",
+          "source": "github.com",
+          "snippet": "Issue discussion says browser automation is not enabled by default in fresh installs.",
+          "rank": 2
+        }
+      ]
+    },
+    "Can browser automation perform silent cross-site actions without user approval?": {
+      "provider": "fixture",
+      "results": [
+        {
+          "title": "Vendor Browser Automation Capabilities",
+          "url": "https://docs.example.com/browser-automation-capabilities",
+          "source": "docs.example.com",
+          "snippet": "Capability notes claim browser automation supports silent cross-site actions in controlled testing.",
+          "rank": 1
+        },
+        {
+          "title": "Security Policy For Browser Automation",
+          "url": "https://security.example.org/browser-automation-policy",
+          "source": "security.example.org",
+          "snippet": "Security policy says browser automation does not support silent cross-site actions without user approval.",
+          "rank": 2
+        }
+      ]
+    },
+    "What setup controls reduce risk for browser automation in local AI agents?": {
+      "provider": "fixture",
+      "results": [
+        {
+          "title": "Top 10 Browser Agent Tips",
+          "url": "https://content.example.com/top-10-browser-agent-tips",
+          "source": "content.example.com",
+          "snippet": "Ultimate guide with generic tips and sponsored setup advice.",
+          "rank": 1
+        },
+        {
+          "title": "Best Browser Automation Promo",
+          "url": "https://promo.example.net/browser-automation-deals",
+          "source": "promo.example.net",
+          "snippet": "Sponsored promo page for browser automation tools.",
+          "rank": 2
+        },
+        {
+          "title": "Community Browser Agent Discussion",
+          "url": "https://forum.example.com/browser-agent-controls",
+          "source": "forum.example.com",
+          "snippet": "Community discussion about browser profiles and confirmation gates.",
+          "rank": 3
+        },
+        {
+          "title": "Official Browser Automation Safety Setup",
+          "url": "https://docs.example.com/browser-automation-safety-setup",
+          "source": "docs.example.com",
+          "snippet": "Official documentation recommends scoped profiles, confirmation gates, and domain allowlists.",
+          "rank": 4
+        },
+        {
+          "title": "Agency Browser Agent Security Policy",
+          "url": "https://agency.gov/ai/browser-agent-security-policy",
+          "source": "agency.gov",
+          "snippet": "Government policy recommends consent prompts, audit logs, and credential separation.",
+          "rank": 5
+        },
+        {
+          "title": "Generic Blog Overview",
+          "url": "https://blog.example.org/browser-agent-overview",
+          "source": "blog.example.org",
+          "snippet": "Overview of browser agents and productivity use cases.",
+          "rank": 6
+        }
+      ]
+    },
+    "Can browser automation perform silent cross-site actions in controlled testing?": {
+      "provider": "fixture",
+      "results": [
+        {
+          "title": "Browser Automation Capability Note",
+          "url": "https://docs.example.com/deep-browser-capability-note",
+          "source": "docs.example.com",
+          "snippet": "Capability note says browser automation supports silent cross-site actions in controlled testing.",
+          "rank": 1
+        },
+        {
+          "title": "Browser Automation Safety Bulletin",
+          "url": "https://security.example.org/deep-browser-safety-bulletin",
+          "source": "security.example.org",
+          "snippet": "Safety bulletin says browser automation does not support silent cross-site actions in controlled testing.",
+          "rank": 2
+        }
+      ]
+    },
+    "Can browser automation perform silent cross-site actions in controlled testing? conflicting evidence comparison": {
+      "provider": "fixture",
+      "results": [
+        {
+          "title": "Official Clarification On Browser Automation Actions",
+          "url": "https://docs.example.com/deep-browser-action-clarification",
+          "source": "docs.example.com",
+          "snippet": "Official clarification explains silent cross-site actions require explicit approval and test harness constraints.",
+          "rank": 1
+        },
+        {
+          "title": "Independent Browser Automation Safety Review",
+          "url": "https://audit.example.org/deep-browser-action-review",
+          "source": "audit.example.org",
+          "snippet": "Independent review says prior capability language referred only to mocked test harnesses.",
+          "rank": 2
+        }
+      ]
+    }
+  },
+  "reads": {
+    "https://docs.example.com/browser-automation-security": {
+      "ok": true,
+      "title": "Browser Automation Security Docs",
+      "final_url": "https://docs.example.com/browser-automation-security",
+      "status_code": 200,
+      "content_type": "text/html",
+      "text": "Browser automation can expose logged-in data to a local model if the browser profile contains active sessions. Browser automation can submit forms or click destructive controls, so least-privilege profiles and confirmation gates are required. Browser automation should restrict sensitive domains unless the user explicitly authorizes access.",
+      "evidence": [
+        {
+          "quote": "Browser automation can expose logged-in data to a local model if the browser profile contains active sessions.",
+          "char_range": [0, 104],
+          "rank": 1
+        },
+        {
+          "quote": "Browser automation can submit forms or click destructive controls, so least-privilege profiles and confirmation gates are required.",
+          "char_range": [105, 226],
+          "rank": 2
+        }
+      ]
+    },
+    "https://agency.gov/ai/browser-agent-risks": {
+      "ok": true,
+      "title": "Agency Guidance On Agentic Browser Access",
+      "final_url": "https://agency.gov/ai/browser-agent-risks",
+      "status_code": 200,
+      "content_type": "text/html",
+      "text": "AI browser agents create privacy risks when they can view logged-in accounts, credentials, or personal data. Agencies recommend user consent, audit logs, and scoped browser sessions for agentic browsing.",
+      "evidence": [
+        {
+          "quote": "AI browser agents create privacy risks when they can view logged-in accounts, credentials, or personal data.",
+          "char_range": [0, 101],
+          "rank": 1
+        },
+        {
+          "quote": "Agencies recommend user consent, audit logs, and scoped browser sessions for agentic browsing.",
+          "char_range": [102, 190],
+          "rank": 2
+        }
+      ]
+    },
+    "https://forum.example.com/browser-agent-incident": {
+      "ok": true,
+      "title": "Community Incident Notes",
+      "final_url": "https://forum.example.com/browser-agent-incident",
+      "status_code": 200,
+      "content_type": "text/html",
+      "text": "A user reported accidental form submission by a browser agent during testing. The report is anecdotal and should be treated as supporting evidence rather than primary guidance.",
+      "evidence": [
+        {
+          "quote": "A user reported accidental form submission by a browser agent during testing.",
+          "char_range": [0, 71],
+          "rank": 1
+        }
+      ]
+    },
+    "https://docs.example.com/browser-tool-setup": {
+      "ok": true,
+      "title": "Official Browser Tool Setup",
+      "final_url": "https://docs.example.com/browser-tool-setup",
+      "status_code": 200,
+      "content_type": "text/html",
+      "text": "Browser automation requires explicit setup before it can be used. Browser automation is not enabled by default in a fresh installation.",
+      "evidence": [
+        {
+          "quote": "Browser automation requires explicit setup before it can be used.",
+          "char_range": [0, 63],
+          "rank": 1
+        },
+        {
+          "quote": "Browser automation is not enabled by default in a fresh installation.",
+          "char_range": [64, 130],
+          "rank": 2
+        }
+      ]
+    },
+    "https://github.com/example/browser-tool/issues/12": {
+      "ok": true,
+      "title": "Issue Thread: Default Browser Tool",
+      "final_url": "https://github.com/example/browser-tool/issues/12",
+      "status_code": 200,
+      "content_type": "text/html",
+      "text": "Browser automation works by default according to one early issue comment. Later maintainers corrected the statement and said explicit setup is required.",
+      "evidence": [
+        {
+          "quote": "Browser automation works by default according to one early issue comment.",
+          "char_range": [0, 69],
+          "rank": 1
+        },
+        {
+          "quote": "Later maintainers corrected the statement and said explicit setup is required.",
+          "char_range": [70, 142],
+          "rank": 2
+        }
+      ]
+    },
+    "https://docs.example.com/browser-automation-capabilities": {
+      "ok": true,
+      "title": "Vendor Browser Automation Capabilities",
+      "final_url": "https://docs.example.com/browser-automation-capabilities",
+      "status_code": 200,
+      "content_type": "text/html",
+      "text": "Browser automation supports silent cross-site actions in controlled testing. The capability note says operators must audit these actions before using production accounts.",
+      "evidence": [
+        {
+          "quote": "Browser automation supports silent cross-site actions in controlled testing.",
+          "char_range": [0, 74],
+          "rank": 1
+        },
+        {
+          "quote": "The capability note says operators must audit these actions before using production accounts.",
+          "char_range": [75, 159],
+          "rank": 2
+        }
+      ]
+    },
+    "https://security.example.org/browser-automation-policy": {
+      "ok": true,
+      "title": "Security Policy For Browser Automation",
+      "final_url": "https://security.example.org/browser-automation-policy",
+      "status_code": 200,
+      "content_type": "text/html",
+      "text": "Browser automation does not support silent cross-site actions in controlled testing. Security policy requires confirmation gates before cross-site actions.",
+      "evidence": [
+        {
+          "quote": "Browser automation does not support silent cross-site actions in controlled testing.",
+          "char_range": [0, 83],
+          "rank": 1
+        },
+        {
+          "quote": "Security policy requires confirmation gates before cross-site actions.",
+          "char_range": [84, 149],
+          "rank": 2
+        }
+      ]
+    },
+    "https://content.example.com/top-10-browser-agent-tips": {
+      "ok": true,
+      "title": "Top 10 Browser Agent Tips",
+      "final_url": "https://content.example.com/top-10-browser-agent-tips",
+      "status_code": 200,
+      "content_type": "text/html",
+      "text": "A generic sponsored guide lists browser automation tips without citing official setup controls.",
+      "evidence": [
+        {
+          "quote": "A generic sponsored guide lists browser automation tips without citing official setup controls.",
+          "char_range": [0, 88],
+          "rank": 1
+        }
+      ]
+    },
+    "https://promo.example.net/browser-automation-deals": {
+      "ok": true,
+      "title": "Best Browser Automation Promo",
+      "final_url": "https://promo.example.net/browser-automation-deals",
+      "status_code": 200,
+      "content_type": "text/html",
+      "text": "A sponsored promo page focuses on discounts and does not provide browser automation safety controls.",
+      "evidence": [
+        {
+          "quote": "A sponsored promo page focuses on discounts and does not provide browser automation safety controls.",
+          "char_range": [0, 93],
+          "rank": 1
+        }
+      ]
+    },
+    "https://docs.example.com/browser-automation-safety-setup": {
+      "ok": true,
+      "title": "Official Browser Automation Safety Setup",
+      "final_url": "https://docs.example.com/browser-automation-safety-setup",
+      "status_code": 200,
+      "content_type": "text/html",
+      "text": "Browser automation safety setup requires scoped browser profiles, confirmation gates for destructive actions, and domain allowlists. Official setup guidance says credential-bearing profiles should be separated from agent testing.",
+      "evidence": [
+        {
+          "quote": "Browser automation safety setup requires scoped browser profiles, confirmation gates for destructive actions, and domain allowlists.",
+          "char_range": [0, 124],
+          "rank": 1
+        },
+        {
+          "quote": "Official setup guidance says credential-bearing profiles should be separated from agent testing.",
+          "char_range": [125, 211],
+          "rank": 2
+        }
+      ]
+    },
+    "https://agency.gov/ai/browser-agent-security-policy": {
+      "ok": true,
+      "title": "Agency Browser Agent Security Policy",
+      "final_url": "https://agency.gov/ai/browser-agent-security-policy",
+      "status_code": 200,
+      "content_type": "text/html",
+      "text": "Agency browser agent security policy recommends consent prompts, audit logs, and credential separation. Policy guidance says local AI agents should not browse high-risk accounts without explicit approval.",
+      "evidence": [
+        {
+          "quote": "Agency browser agent security policy recommends consent prompts, audit logs, and credential separation.",
+          "char_range": [0, 96],
+          "rank": 1
+        },
+        {
+          "quote": "Policy guidance says local AI agents should not browse high-risk accounts without explicit approval.",
+          "char_range": [97, 187],
+          "rank": 2
+        }
+      ]
+    },
+    "https://docs.example.com/deep-browser-capability-note": {
+      "ok": true,
+      "title": "Browser Automation Capability Note",
+      "final_url": "https://docs.example.com/deep-browser-capability-note",
+      "status_code": 200,
+      "content_type": "text/html",
+      "text": "Browser automation supports silent cross-site actions in controlled testing. Capability notes say the behavior applies inside a mocked browser harness.",
+      "evidence": [
+        {
+          "quote": "Browser automation supports silent cross-site actions in controlled testing.",
+          "char_range": [0, 74],
+          "rank": 1
+        },
+        {
+          "quote": "Capability notes say the behavior applies inside a mocked browser harness.",
+          "char_range": [75, 145],
+          "rank": 2
+        }
+      ]
+    },
+    "https://security.example.org/deep-browser-safety-bulletin": {
+      "ok": true,
+      "title": "Browser Automation Safety Bulletin",
+      "final_url": "https://security.example.org/deep-browser-safety-bulletin",
+      "status_code": 200,
+      "content_type": "text/html",
+      "text": "Browser automation does not support silent cross-site actions in controlled testing. Safety bulletin says approval gates are required outside mocked harnesses.",
+      "evidence": [
+        {
+          "quote": "Browser automation does not support silent cross-site actions in controlled testing.",
+          "char_range": [0, 83],
+          "rank": 1
+        },
+        {
+          "quote": "Safety bulletin says approval gates are required outside mocked harnesses.",
+          "char_range": [84, 153],
+          "rank": 2
+        }
+      ]
+    },
+    "https://docs.example.com/deep-browser-action-clarification": {
+      "ok": true,
+      "title": "Official Clarification On Browser Automation Actions",
+      "final_url": "https://docs.example.com/deep-browser-action-clarification",
+      "status_code": 200,
+      "content_type": "text/html",
+      "text": "Official clarification says browser automation requires explicit approval for real cross-site actions. Silent cross-site actions were only supported inside mocked browser harnesses.",
+      "evidence": [
+        {
+          "quote": "Official clarification says browser automation requires explicit approval for real cross-site actions.",
+          "char_range": [0, 91],
+          "rank": 1
+        },
+        {
+          "quote": "Silent cross-site actions were only supported inside mocked browser harnesses.",
+          "char_range": [92, 164],
+          "rank": 2
+        }
+      ]
+    },
+    "https://audit.example.org/deep-browser-action-review": {
+      "ok": true,
+      "title": "Independent Browser Automation Safety Review",
+      "final_url": "https://audit.example.org/deep-browser-action-review",
+      "status_code": 200,
+      "content_type": "text/html",
+      "text": "Independent review says browser automation action disputes are resolved by distinguishing mocked harness tests from real browser sessions. Real sessions require explicit user approval before cross-site actions.",
+      "evidence": [
+        {
+          "quote": "Independent review says browser automation action disputes are resolved by distinguishing mocked harness tests from real browser sessions.",
+          "char_range": [0, 123],
+          "rank": 1
+        },
+        {
+          "quote": "Real sessions require explicit user approval before cross-site actions.",
+          "char_range": [124, 189],
+          "rank": 2
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "tasks": [
+    {
+      "id": "regression-official-lmstudio-mcp",
+      "category": "coverage_primary_source",
+      "question": "What is the current official LM Studio guidance for enabling MCP tools?",
+      "tool": "deep_research",
+      "expected_domains": ["lmstudio.ai"],
+      "params": {
+        "breadth": 4,
+        "read_top_per_query": 1,
+        "report_format": "executive_brief",
+        "follow_up_rounds": 1
+      }
+    },
+    {
+      "id": "regression-freshness-node-security",
+      "category": "freshness_current_lookup",
+      "question": "What current official tools should a Node.js project use to audit dependency vulnerabilities?",
+      "tool": "deep_research",
+      "expected_domains": ["docs.npmjs.com", "github.com"],
+      "params": {
+        "breadth": 4,
+        "read_top_per_query": 1,
+        "report_format": "executive_brief",
+        "follow_up_rounds": 1
+      }
+    },
+    {
+      "id": "regression-citation-rag-eval",
+      "category": "citation_and_claim_audit",
+      "question": "Find authoritative or research-backed guidance on evaluating retrieval-augmented generation quality.",
+      "tool": "deep_research",
+      "expected_domains": ["arxiv.org"],
+      "params": {
+        "breadth": 4,
+        "read_top_per_query": 1,
+        "report_format": "long_report",
+        "follow_up_rounds": 1
+      }
+    },
+    {
+      "id": "regression-source-diversity-browser-agents",
+      "category": "source_diversity_and_counterpoint",
+      "question": "Find competing views on whether browser agents should rely on rendered webpages or search snippets.",
+      "tool": "deep_research",
+      "params": {
+        "breadth": 4,
+        "read_top_per_query": 1,
+        "report_format": "executive_brief",
+        "follow_up_rounds": 1
+      }
+    },
+    {
+      "id": "regression-claim-support-browser-risk",
+      "category": "claim_grounding",
+      "question": "What security risks matter when giving a local model browser automation access?",
+      "tool": "deep_research",
+      "required_checks": ["claim_support_present", "indexed_claim_support", "best_evidence_reported"],
+      "params": {
+        "breadth": 4,
+        "read_top_per_query": 1,
+        "report_format": "long_report",
+        "follow_up_rounds": 1
+      }
+    },
+    {
+      "id": "regression-contradiction-browser-rendering",
+      "category": "contradiction_resolution",
+      "question": "Find conflicting views on whether research agents should prefer rendered browser pages or search API snippets and identify evidence that resolves the disagreement.",
+      "tool": "deep_research",
+      "required_checks": ["contradiction_review_present", "contradiction_table_reported", "claim_support_present", "intent_quality_adequate"],
+      "params": {
+        "breadth": 4,
+        "read_top_per_query": 1,
+        "report_format": "executive_brief",
+        "follow_up_rounds": 2
+      }
+    }
+  ]
+}

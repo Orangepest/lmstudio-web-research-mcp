@@ -1,0 +1,84 @@
+{
+  "tasks": [
+    {
+      "id": "fixture-browser-risk-claim-support",
+      "category": "fixture_claim_grounding",
+      "question": "What risks matter when giving a local model browser automation access?",
+      "tool": "research_web",
+      "required_checks": ["claim_support_present", "indexed_claim_support", "best_evidence_reported"],
+      "params": {
+        "max_results": 4,
+        "read_top": 3,
+        "report_format": "long_report"
+      }
+    },
+    {
+      "id": "fixture-contradiction-browser-default",
+      "category": "fixture_contradiction_resolution",
+      "question": "Does the browser automation tool work by default or require explicit setup?",
+      "tool": "research_web",
+      "required_checks": ["claim_support_present", "contradiction_review_present", "contradiction_table_reported"],
+      "params": {
+        "max_results": 4,
+        "read_top": 2,
+        "report_format": "long_report"
+      }
+    },
+    {
+      "id": "fixture-forced-conflicted-browser-actions",
+      "category": "fixture_contradiction_resolution",
+      "question": "Can browser automation perform silent cross-site actions without user approval?",
+      "tool": "research_web",
+      "required_checks": [
+        "claim_support_present",
+        "contradiction_review_present",
+        "contradiction_table_reported",
+        "contradiction_table_rows_present",
+        "contradiction_table_source_pairs_present",
+        "contradiction_table_resolution_queries_present"
+      ],
+      "params": {
+        "max_results": 4,
+        "read_top": 2,
+        "report_format": "long_report"
+      }
+    },
+    {
+      "id": "fixture-noisy-source-selection",
+      "category": "fixture_source_selection",
+      "question": "What setup controls reduce risk for browser automation in local AI agents?",
+      "tool": "research_web",
+      "required_checks": [
+        "has_primary_source",
+        "source_selection_avoids_low_value",
+        "source_selection_reads_buried_strong_sources",
+        "claim_support_present",
+        "best_evidence_reported"
+      ],
+      "params": {
+        "max_results": 6,
+        "read_top": 2,
+        "report_format": "long_report"
+      }
+    },
+    {
+      "id": "fixture-deep-contradiction-follow-up",
+      "category": "fixture_deep_contradiction_resolution",
+      "question": "Can browser automation perform silent cross-site actions in controlled testing?",
+      "tool": "deep_research",
+      "required_checks": [
+        "contradiction_review_present",
+        "contradiction_table_rows_present",
+        "contradiction_table_source_pairs_present",
+        "contradiction_resolution_searched",
+        "follow_up_rounds_recorded"
+      ],
+      "params": {
+        "breadth": 1,
+        "read_top_per_query": 2,
+        "follow_up_rounds": 1,
+        "report_format": "long_report"
+      }
+    }
+  ]
+}

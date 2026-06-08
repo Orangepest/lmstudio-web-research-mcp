@@ -1,0 +1,188 @@
+{
+  "tasks": [
+    {
+      "id": "current-lookup-lmstudio-mcp",
+      "category": "quick_current_lookup",
+      "question": "What is the current official LM Studio guidance for enabling MCP tools?",
+      "tool": "research_web",
+      "expected_domains": ["lmstudio.ai"],
+      "params": {"max_results": 8, "read_top": 3, "report_format": "executive_brief"}
+    },
+    {
+      "id": "technical-browser-research-local-llm",
+      "category": "technical_comparison",
+      "question": "Compare practical free ways to add browser or web research tools to a local LLM app.",
+      "tool": "deep_research",
+      "expected_domains": ["github.com"],
+      "params": {"breadth": 3, "read_top_per_query": 1, "report_format": "executive_brief", "follow_up_rounds": 1}
+    },
+    {
+      "id": "regulatory-subscription-cancel",
+      "category": "regulatory_scan",
+      "question": "What is the latest official US guidance on subscription cancellation or click-to-cancel rules?",
+      "tool": "deep_research",
+      "expected_domains": ["ftc.gov", "federalregister.gov"],
+      "params": {"breadth": 3, "read_top_per_query": 1, "report_format": "executive_brief", "follow_up_rounds": 1}
+    },
+    {
+      "id": "market-local-ai-coding-assistants",
+      "category": "market_vendor_comparison",
+      "question": "Compare current local AI coding assistant options for privacy-focused developers.",
+      "tool": "deep_research",
+      "expected_domains": ["github.com"],
+      "params": {"breadth": 3, "read_top_per_query": 1, "report_format": "comparison_matrix", "follow_up_rounds": 1}
+    },
+    {
+      "id": "product-decision-searxng-vs-paid-search",
+      "category": "product_decision",
+      "question": "Should a local research assistant use free local SearXNG or a paid search API for reliable web research?",
+      "tool": "deep_research",
+      "expected_domains": ["docs.searxng.org"],
+      "params": {"breadth": 3, "read_top_per_query": 1, "report_format": "executive_brief", "follow_up_rounds": 1}
+    },
+    {
+      "id": "source-conflict-ai-browser-agents",
+      "category": "source_conflict",
+      "question": "Find conflicting views on whether browser agents should rely on live rendered pages or search API snippets.",
+      "tool": "deep_research",
+      "params": {"breadth": 3, "read_top_per_query": 1, "report_format": "executive_brief", "follow_up_rounds": 1}
+    },
+    {
+      "id": "blocked-page-handoff-news",
+      "category": "blocked_page_handoff",
+      "question": "Research a current news topic likely to include paywalled or bot-protected sources and explain any blocked-source handoffs honestly.",
+      "tool": "research_web",
+      "params": {"max_results": 8, "read_top": 3, "report_format": "executive_brief"}
+    },
+    {
+      "id": "official-python-packaging",
+      "category": "technical_official_docs",
+      "question": "What is the current recommended Python packaging workflow for a small command-line tool?",
+      "tool": "deep_research",
+      "expected_domains": ["packaging.python.org", "docs.python.org"],
+      "params": {"breadth": 3, "read_top_per_query": 1, "report_format": "executive_brief", "follow_up_rounds": 1}
+    },
+    {
+      "id": "github-mcp-server-quality",
+      "category": "technical_repo_review",
+      "question": "Assess the maturity and setup burden of open-source MCP servers that give local models browser access.",
+      "tool": "deep_research",
+      "expected_domains": ["github.com"],
+      "params": {"breadth": 3, "read_top_per_query": 1, "report_format": "executive_brief", "follow_up_rounds": 1}
+    },
+    {
+      "id": "academic-rag-evaluation",
+      "category": "academic_scan",
+      "question": "Find recent research or authoritative guidance on evaluating retrieval-augmented generation quality.",
+      "tool": "deep_research",
+      "expected_domains": ["arxiv.org"],
+      "params": {"breadth": 3, "read_top_per_query": 1, "report_format": "executive_brief", "follow_up_rounds": 1}
+    },
+    {
+      "id": "current-security-node-packages",
+      "category": "security_current_lookup",
+      "question": "What current official tools should a Node.js project use to audit dependency vulnerabilities?",
+      "tool": "deep_research",
+      "expected_domains": ["docs.npmjs.com", "github.com"],
+      "params": {"breadth": 3, "read_top_per_query": 1, "report_format": "executive_brief", "follow_up_rounds": 1}
+    },
+    {
+      "id": "vendor-comparison-local-llm-runtimes",
+      "category": "vendor_comparison",
+      "question": "Compare LM Studio, Ollama, Jan, and AnythingLLM for a user who wants local models with external tools.",
+      "tool": "deep_research",
+      "expected_domains": ["lmstudio.ai", "ollama.com", "jan.ai", "anythingllm.com"],
+      "params": {"breadth": 4, "read_top_per_query": 1, "report_format": "comparison_matrix", "follow_up_rounds": 1}
+    },
+    {
+      "id": "data-statistics-local-ai-adoption",
+      "category": "data_statistics",
+      "question": "Find credible recent data points about adoption of AI coding tools by software developers.",
+      "tool": "deep_research",
+      "params": {"breadth": 3, "read_top_per_query": 1, "report_format": "executive_brief", "follow_up_rounds": 1}
+    },
+    {
+      "id": "legal-privacy-local-ai-tools",
+      "category": "legal_privacy_scan",
+      "question": "What privacy considerations matter when using local AI tools with browser access to logged-in websites?",
+      "tool": "deep_research",
+      "params": {"breadth": 3, "read_top_per_query": 1, "report_format": "executive_brief", "follow_up_rounds": 1}
+    },
+    {
+      "id": "implementation-playwright-extraction",
+      "category": "implementation_comparison",
+      "question": "Compare Playwright-based extraction with plain HTTP extraction for research agents reading modern websites.",
+      "tool": "deep_research",
+      "expected_domains": ["playwright.dev"],
+      "params": {"breadth": 3, "read_top_per_query": 1, "report_format": "executive_brief", "follow_up_rounds": 1}
+    },
+    {
+      "id": "adversarial-contradiction-ai-benchmarks",
+      "category": "adversarial_contradiction",
+      "question": "Find and reconcile conflicting claims about whether public LLM benchmark scores reliably predict real-world assistant usefulness.",
+      "tool": "deep_research",
+      "required_checks": ["contradiction_review_present", "contradiction_table_reported", "claim_support_present", "best_evidence_reported"],
+      "params": {"breadth": 4, "read_top_per_query": 1, "report_format": "executive_brief", "follow_up_rounds": 2}
+    },
+    {
+      "id": "freshness-official-openai-models",
+      "category": "freshness_current_lookup",
+      "question": "What is the current official OpenAI guidance for choosing models for tool-using agents?",
+      "tool": "deep_research",
+      "expected_domains": ["platform.openai.com", "openai.com"],
+      "required_checks": ["freshness_audit_passes", "matches_expected_domains", "best_evidence_reported"],
+      "params": {"breadth": 4, "read_top_per_query": 1, "freshness": "month", "report_format": "executive_brief", "follow_up_rounds": 1}
+    },
+    {
+      "id": "official-source-copyright-ai-scraping",
+      "category": "legal_official_sources",
+      "question": "What official or primary sources explain current legal risks around AI companies using web content for training or retrieval?",
+      "tool": "deep_research",
+      "expected_domains": ["copyright.gov", "ftc.gov"],
+      "required_checks": ["has_primary_source", "intent_quality_adequate", "citations_validate"],
+      "params": {"breadth": 4, "read_top_per_query": 1, "report_format": "long_report", "follow_up_rounds": 1}
+    },
+    {
+      "id": "source-quality-seo-vs-primary",
+      "category": "source_quality_adversarial",
+      "question": "Research whether AI coding assistants improve developer productivity while avoiding SEO listicles and prioritizing primary or empirical sources.",
+      "tool": "deep_research",
+      "required_checks": ["has_primary_source", "has_domain_diversity", "intent_quality_adequate", "no_low_quality_intents"],
+      "params": {"breadth": 4, "read_top_per_query": 1, "report_format": "executive_brief", "follow_up_rounds": 2}
+    },
+    {
+      "id": "claim-grounding-browser-automation-risk",
+      "category": "claim_grounding",
+      "question": "What are the main security risks of giving a local LLM browser automation access, and which sources support each risk?",
+      "tool": "deep_research",
+      "required_checks": ["claim_support_present", "indexed_claim_support", "no_unsupported_indexed_claims"],
+      "params": {"breadth": 4, "read_top_per_query": 1, "report_format": "long_report", "follow_up_rounds": 1}
+    },
+    {
+      "id": "multi-vendor-current-tool-calling",
+      "category": "vendor_current_comparison",
+      "question": "Compare current tool-calling or MCP-style external tool support across LM Studio, Claude Desktop, and OpenAI agent tooling.",
+      "tool": "deep_research",
+      "expected_domains": ["lmstudio.ai", "anthropic.com", "openai.com"],
+      "required_checks": ["matches_expected_domains", "has_domain_diversity", "best_evidence_reported"],
+      "params": {"breadth": 5, "read_top_per_query": 1, "freshness": "month", "report_format": "comparison_matrix", "follow_up_rounds": 1}
+    },
+    {
+      "id": "data-heavy-rag-eval-metrics",
+      "category": "data_and_methods",
+      "question": "Compare current evaluation metrics and datasets used to measure RAG answer quality, including limitations.",
+      "tool": "deep_research",
+      "expected_domains": ["arxiv.org"],
+      "required_checks": ["has_primary_source", "claim_support_present", "intent_quality_adequate"],
+      "params": {"breadth": 4, "read_top_per_query": 1, "report_format": "executive_brief", "follow_up_rounds": 1}
+    },
+    {
+      "id": "contradiction-resolution-remote-browser-control",
+      "category": "contradiction_resolution",
+      "question": "Find disputed claims about whether remote browser control is safer than local browser control for AI agents and identify what evidence resolves the dispute.",
+      "tool": "deep_research",
+      "required_checks": ["contradiction_review_present", "contradiction_table_reported", "contradiction_retrieval_planned", "claim_support_present"],
+      "params": {"breadth": 4, "read_top_per_query": 1, "report_format": "executive_brief", "follow_up_rounds": 2}
+    }
+  ]
+}

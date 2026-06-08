@@ -2,25 +2,39 @@
 
 Use this checklist before making the repo public on GitHub or Hugging Face.
 
+For clone-to-new-machine setup, see [Transfer Guide](docs/TRANSFER.md).
+
 ## 1. Sanity Check
 
 ```bash
-python -m unittest discover -s tests -v
-rg -n "api[_-]?key|secret|token|password|Bearer|C:\\\\Users|\\.env|credential" -S . --glob "!.venv/**" --glob "!.runtime/**" --glob "!.pytest_cache/**"
+python scripts/github_publish_check.py
 ```
 
-Expected result: tests pass, and the secret scan returns no real credentials or personal absolute paths.
+Expected result: tests pass, runtime folders are ignored, and the safety scan returns no real credentials or personal absolute paths.
 
 ## 2. GitHub
 
+If `origin` already points to Hugging Face, keep it and use a separate `github` remote.
+
+Private-first publish:
+
 ```bash
-git init
-git add README.md PUBLISHING.md REFACTORING_SUMMARY.md requirements.txt mcp.json.example .env.example .gitignore .hfignore mcp_server scripts tests web_research
-git commit -m "Publish live-only web research MCP"
-gh repo create lmstudio-web-research-mcp --public --source . --remote origin --push
+git status --short
+python scripts/github_publish_check.py
+git add README.md PUBLISHING.md REFACTORING_SUMMARY.md NEXT_ACTIONS.md docs evals requirements.txt requirements-lock.txt mcp.json.example .env.example .gitignore .hfignore mcp_server scripts tests web_research
+git diff --cached --stat
+git commit -m "Prepare transferable LM Studio research MCP"
+gh repo create lmstudio-web-research-mcp --private --source . --remote github --push
 ```
 
-If you prefer a different repo name, replace `lmstudio-web-research-mcp`.
+If you prefer a different repo name, replace `lmstudio-web-research-mcp`. Use `--public` only after reviewing the staged diff and confirming that public release is intended.
+
+Existing GitHub repo:
+
+```bash
+git remote add github https://github.com/<user>/lmstudio-web-research-mcp.git
+git push -u github main
+```
 
 ## 3. Hugging Face
 
