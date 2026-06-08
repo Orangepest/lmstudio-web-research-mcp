@@ -955,6 +955,64 @@ class ResearchDirectorTests(unittest.TestCase):
         self.assertEqual(len(followup_jobs), 2)
         self.assertEqual(result['iterations'][0]['wave']['cycles'][0]['action'], 'continue')
 
+    def test_director_autopilot_recovery_policy_cancels_stale_jobs_and_status_loads_ledger(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            created = research_director_command(
+                'objective: Build a local deep research system\ndepth=standard\nbudget_jobs=8\napply=true',
+                root=root / 'directors',
+                campaign_root=root / 'campaigns',
+                jobs_root=root / 'jobs',
+                runs_root=root / 'runs',
+                synthesis_root=root / 'syntheses',
+            )
+            director_id = created['director']['director_id']
+            stuck = create_research_job(root / 'jobs', request='stale autonomy followup', tags=[f'director:{director_id}', 'director_followup'])
+            job_path = Path(stuck['job_path'])
+            job_payload = json.loads(job_path.read_text(encoding='utf-8'))
+            job_payload['updated_at'] = '2026-01-01T00:00:00Z'
+            job_path.write_text(json.dumps(job_payload), encoding='utf-8')
+
+            result = research_director_command(
+                f'director_id: {director_id}\naction: autopilot\npolicy=aggressive\nmax_iterations=1\nmax_cycles=1\napply=true',
+                root=root / 'directors',
+                campaign_root=root / 'campaigns',
+                jobs_root=root / 'jobs',
+                runs_root=root / 'runs',
+                synthesis_root=root / 'syntheses',
+                worker_state_dir=root / 'worker',
+            )
+            history = research_director_command(
+                f'director_id: {director_id}\naction: autopilots\nlimit=5',
+                root=root / 'directors',
+                campaign_root=root / 'campaigns',
+                jobs_root=root / 'jobs',
+                runs_root=root / 'runs',
+                synthesis_root=root / 'syntheses',
+            )
+            status = research_director_command(
+                f'director_id: {director_id}\naction: autopilot_status\nautopilot_id={result["autopilot_id"]}',
+                root=root / 'directors',
+                campaign_root=root / 'campaigns',
+                jobs_root=root / 'jobs',
+                runs_root=root / 'runs',
+                synthesis_root=root / 'syntheses',
+            )
+            loaded_job = load_research_job(root / 'jobs', stuck['job']['job_id'])
+
+        recovery_counts = result['iterations'][0]['recovery']['issue_counts']
+        self.assertFalse(result['dry_run'])
+        self.assertTrue(result['auto_recover'])
+        self.assertEqual(result['recovery_policy'], 'aggressive')
+        self.assertEqual(recovery_counts['stuck_jobs'], 1)
+        self.assertEqual(recovery_counts['cancelled_jobs'], 1)
+        self.assertEqual(loaded_job['job']['status'], 'cancelled')
+        self.assertEqual(history['count'], 1)
+        self.assertEqual(history['autopilots'][0]['autopilot_id'], result['autopilot_id'])
+        self.assertTrue(status['ok'])
+        self.assertEqual(status['summary']['latest_recovery_issue_counts']['cancelled_jobs'], 1)
+        self.assertEqual(status['autopilot']['stop_reason'], result['stop_reason'])
+
     def test_director_dashboard_collects_gate_waves_and_writes_report(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

@@ -1733,13 +1733,15 @@ def director_autopilot_markdown(autopilot: dict[str, Any]) -> str:
         '',
         '## Iterations',
         '',
-        '| Iteration | Gate Action | Wave Stop | Worker Jobs | Followups | Artifacts |',
-        '| ---: | --- | --- | ---: | ---: | --- |',
+        '| Iteration | Gate Action | Recovery | Wave Stop | Worker Jobs | Followups | Artifacts |',
+        '| ---: | --- | --- | --- | ---: | ---: | --- |',
     ]
     for iteration in autopilot.get('iterations', []) or []:
         if not isinstance(iteration, dict):
             continue
         gate = iteration.get('quality_gate') if isinstance(iteration.get('quality_gate'), dict) else {}
+        recovery = iteration.get('recovery') if isinstance(iteration.get('recovery'), dict) else {}
+        recovery_counts = recovery.get('issue_counts') if isinstance(recovery.get('issue_counts'), dict) else {}
         worker = iteration.get('worker_run') if isinstance(iteration.get('worker_run'), dict) else {}
         wave = iteration.get('wave') if isinstance(iteration.get('wave'), dict) else {}
         created_followups = 0
@@ -1757,6 +1759,8 @@ def director_autopilot_markdown(autopilot: dict[str, Any]) -> str:
             artifacts.append('synthesis')
         lines.append(
             f"| {_fmt(iteration.get('iteration'))} | {_fmt(gate.get('recommended_action'))} | "
+            f"{_fmt(recovery.get('policy', {}).get('name') if isinstance(recovery.get('policy'), dict) else None)} "
+            f"stuck={_fmt(recovery_counts.get('stuck_jobs', 0))} cancelled={_fmt(recovery_counts.get('cancelled_jobs', 0))} | "
             f"{_fmt(wave.get('stop_reason'))} | {_fmt(worker.get('worked_count', 0))} | "
             f"{_fmt(created_followups)} | {', '.join(artifacts) or 'none'} |"
         )
@@ -1784,6 +1788,8 @@ def run_research_director_autopilot(
     worker_jobs_per_iteration: int = 1,
     worker_id: str = 'research-director-autopilot',
     local_synthesis: bool = False,
+    recovery_policy: str = 'none',
+    auto_recover: bool = False,
     write_dashboard: bool = True,
     write_runbook_on_stop: bool = True,
     tmux: bool = False,
@@ -1805,8 +1811,34 @@ def run_research_director_autopilot(
     stop_reason = 'max_iterations'
     message = 'Autopilot reached the configured iteration limit.'
     worker_start_once = bool(start_worker_enabled)
+    normalized_recovery_policy = str(recovery_policy or 'none').strip().lower().replace('-', '_')
+    recover_each_iteration = bool(auto_recover or normalized_recovery_policy not in {'', 'none', 'off', 'false'})
 
     for iteration_number in range(1, max_iterations + 1):
+        recovery = None
+        if recover_each_iteration:
+            policy_name = normalized_recovery_policy if normalized_recovery_policy not in {'', 'none', 'off', 'false'} else 'balanced'
+            recovery_policy_config = _recovery_policy(policy_name)
+            recovery = recover_research_director(
+                root,
+                director_id,
+                campaign_root=campaign_root,
+                jobs_root=jobs_root,
+                runs_root=runs_root,
+                worker_state_dir=worker_state_dir,
+                apply=apply,
+                stale_hours=int(recovery_policy_config['stale_hours']),
+                policy=policy_name,
+                cancel_stuck_jobs=bool(recovery_policy_config.get('cancel_stuck_jobs')),
+                review_waves=bool(recovery_policy_config.get('review_waves')),
+                start_worker_enabled=False,
+                resume_checkpoints=bool(recovery_policy_config.get('allow_checkpoint_resume')),
+                tmux=tmux,
+            )
+            loaded_recovered = load_research_director(root, director_id)
+            if loaded_recovered.get('ok'):
+                director = dict(loaded_recovered['director'])
+
         worker_run = None
         if run_worker_enabled and worker_jobs_per_iteration:
             if apply:
@@ -1881,6 +1913,7 @@ def run_research_director_autopilot(
             'started_at': utc_now(),
             'quality_gate': gate,
             'recommended_action': recommended,
+            'recovery': recovery,
             'worker_run': worker_run,
             'wave': wave,
             'dashboard_path': dashboard.get('dashboard_path') if isinstance(dashboard, dict) else None,
@@ -1932,6 +1965,8 @@ def run_research_director_autopilot(
         'director_id': director_id,
         'director': _director_summary(director),
         'worker_mode': 'in_process' if run_worker_enabled else ('detached' if start_worker_enabled else 'observe_only'),
+        'recovery_policy': normalized_recovery_policy,
+        'auto_recover': recover_each_iteration,
         'max_iterations': max_iterations,
         'max_cycles_per_iteration': max_cycles_per_iteration,
         'max_followups': max_followups,
@@ -1965,6 +2000,75 @@ def run_research_director_autopilot(
             _write_json(Path(str(updated['director_path'])), updated)
             payload['director'] = _director_summary(updated)
     return payload
+
+
+def _autopilot_summary(autopilot: dict[str, Any], path: Path) -> dict[str, Any]:
+    iterations = autopilot.get('iterations') if isinstance(autopilot.get('iterations'), list) else []
+    latest = iterations[-1] if iterations and isinstance(iterations[-1], dict) else {}
+    gate = latest.get('quality_gate') if isinstance(latest.get('quality_gate'), dict) else {}
+    recovery = latest.get('recovery') if isinstance(latest.get('recovery'), dict) else {}
+    recovery_counts = recovery.get('issue_counts') if isinstance(recovery.get('issue_counts'), dict) else {}
+    return {
+        'autopilot_id': autopilot.get('autopilot_id') or path.parent.name,
+        'director_id': autopilot.get('director_id'),
+        'stop_reason': autopilot.get('stop_reason'),
+        'iteration_count': autopilot.get('iteration_count') or len(iterations),
+        'worker_mode': autopilot.get('worker_mode'),
+        'auto_recover': bool(autopilot.get('auto_recover')),
+        'recovery_policy': autopilot.get('recovery_policy'),
+        'latest_gate_action': gate.get('recommended_action'),
+        'latest_recovery_issue_counts': recovery_counts,
+        'created_at': autopilot.get('created_at'),
+        'message': autopilot.get('message'),
+        'autopilot_path': str(path),
+        'report_path': str(path.with_suffix('.md')),
+    }
+
+
+def list_director_autopilots(root: Path, director_id: str, *, limit: int = 20) -> dict[str, Any]:
+    try:
+        director_dir = _safe_director_dir(root, director_id)
+    except ValueError as exc:
+        return {'ok': False, 'message': str(exc), 'director_id': director_id}
+    autopilots = []
+    for path in (director_dir / 'autopilots').glob('*/autopilot.json'):
+        payload = _read_json(path)
+        if payload:
+            autopilots.append(_autopilot_summary(payload, path))
+    autopilots.sort(key=lambda item: str(item.get('created_at') or ''), reverse=True)
+    limit = max(1, min(100, int(limit)))
+    return {
+        'ok': True,
+        'director_id': director_id,
+        'autopilots': autopilots[:limit],
+        'count': len(autopilots[:limit]),
+        'total_count': len(autopilots),
+    }
+
+
+def load_director_autopilot(root: Path, director_id: str, autopilot_id: str | None = None) -> dict[str, Any]:
+    listed = list_director_autopilots(root, director_id, limit=100)
+    if not listed.get('ok'):
+        return listed
+    candidates = listed.get('autopilots') if isinstance(listed.get('autopilots'), list) else []
+    selected = None
+    if autopilot_id:
+        for item in candidates:
+            if str(item.get('autopilot_id') or '') == str(autopilot_id):
+                selected = item
+                break
+    elif candidates:
+        selected = candidates[0]
+    if not selected:
+        return {'ok': False, 'director_id': director_id, 'autopilot_id': autopilot_id, 'message': 'Research director autopilot not found.'}
+    path = Path(str(selected.get('autopilot_path') or ''))
+    payload = _read_json(path)
+    if not payload:
+        return {'ok': False, 'director_id': director_id, 'autopilot_id': selected.get('autopilot_id'), 'message': 'Could not read autopilot artifact.'}
+    payload['summary'] = selected
+    payload['autopilot_path'] = str(path)
+    payload['report_path'] = str(path.with_suffix('.md'))
+    return {'ok': True, 'director_id': director_id, 'autopilot': payload, 'summary': selected}
 
 
 def list_director_waves(root: Path, director_id: str, *, limit: int = 20) -> dict[str, Any]:
@@ -4093,7 +4197,7 @@ def research_director_command(
             return loaded
         assessment = assess_research_director(loaded['director'], campaign_root=campaign_root, jobs_root=jobs_root, runs_root=runs_root)
         return {'ok': assessment.get('ok'), 'tool': 'safe_research_director', 'director': assessment.get('director'), 'assessment': assessment}
-    if values and action in {'advance', 'synthesize', 'wave', 'autopilot', 'auto', 'dashboard', 'history', 'graph', 'evidence_graph', 'graph_actions', 'execute_graph_actions', 'comparison_actions', 'compare_actions', 'execute_comparison_actions', 'comparison_replay', 'replay_comparison_actions', 'runbook', 'handoff', 'runbook_export', 'export_runbook', 'compare_bundles', 'compare_bundle', 'recovery', 'recover'}:
+    if values and action in {'advance', 'synthesize', 'wave', 'autopilot', 'auto', 'autopilot_status', 'autopilots', 'autopilot_history', 'dashboard', 'history', 'graph', 'evidence_graph', 'graph_actions', 'execute_graph_actions', 'comparison_actions', 'compare_actions', 'execute_comparison_actions', 'comparison_replay', 'replay_comparison_actions', 'runbook', 'handoff', 'runbook_export', 'export_runbook', 'compare_bundles', 'compare_bundle', 'recovery', 'recover'}:
         if action in {'recovery', 'recover'}:
             policy_name = str(options.get('policy') or options.get('recovery_policy') or 'manual')
             recovery_policy = _recovery_policy(policy_name)
@@ -4131,6 +4235,20 @@ def research_director_command(
                     runs_root=runs_root,
                     apply=apply,
                     limit=limit,
+                ),
+            }
+        if action in {'autopilots', 'autopilot_history'}:
+            return {
+                'tool': 'safe_research_director',
+                **list_director_autopilots(root, values[0], limit=limit),
+            }
+        if action == 'autopilot_status':
+            return {
+                'tool': 'safe_research_director',
+                **load_director_autopilot(
+                    root,
+                    values[0],
+                    autopilot_id=str(options.get('autopilot_id') or options.get('id') or '').strip() or None,
                 ),
             }
         if action in {'graph', 'evidence_graph'}:
@@ -4280,6 +4398,8 @@ def research_director_command(
                     max_followups=_int_option(options, 'max_followups', 3, minimum=0, maximum=20),
                     worker_jobs_per_iteration=_int_option(options, 'worker_jobs_per_iteration', 1, minimum=0, maximum=25),
                     local_synthesis=_bool_option(options, 'local_synthesis'),
+                    recovery_policy=str(options.get('recovery_policy') or options.get('policy') or 'none'),
+                    auto_recover=_bool_option(options, 'auto_recover'),
                     write_dashboard=_bool_option(options, 'write_dashboard', default=True),
                     write_runbook_on_stop=_bool_option(options, 'write_runbook', default=True),
                     worker_id=str(options.get('worker_id') or 'research-director-autopilot'),
